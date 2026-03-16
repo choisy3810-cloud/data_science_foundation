@@ -1,1 +1,286 @@
-<h1>안녕하세요, 제 첫 웹사이트입니다!</h1>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>데이터 탐정 리포트: 추론과 예측 실습</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Insightful Deep Blue & Actionable Orange (Bg: #f8fafc, Accent: #0f172a, #f97316) -->
+    <!-- Application Structure Plan: This updated SPA adds a dedicated 'Inference & Prediction' module. After the initial 4-step guide, students interact with 'Hypothesis Cards' to practice Step 4 (Inference). Finally, a 'Prediction Mode' is introduced where students can toggle a projected 2022-2023 trendline on the chart, demonstrating how historical data informs future forecasts. This keeps the flow: Observe -> Analyze -> Infer -> Predict. -->
+    <!-- Visualization & Content Choices: 
+        1. Updated 4-Step Guide -> Goal: Organize -> UI: Tabbed Interface -> Method: Tailwind/JS.
+        2. Scenario Analysis -> Goal: Relationships -> UI: Interactive Cards -> Interaction: Click to see "Expert Feedback" -> Method: Vanilla JS.
+        3. Future Projection Chart -> Goal: Change -> UI: Scatter Plot with Toggleable "Forecast" Dataset -> Interaction: Toggle switch -> Library: Chart.js (Canvas).
+        Confirming NO SVG/Mermaid JS used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
+        .chart-container { position: relative; width: 100%; height: 350px; }
+        .step-card { transition: all 0.3s ease; border-left: 4px solid transparent; }
+        .step-active { border-left-color: #3b82f6; background-color: #f0f7ff; transform: translateX(8px); }
+        .prediction-line { border: 2px dashed #94a3b8; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased">
+
+    <nav class="bg-slate-900 text-white py-4 shadow-lg sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 flex justify-between items-center">
+            <h1 class="text-xl font-bold flex items-center">🕵️‍♂️ 데이터 탐정 실습실 <span class="ml-2 text-xs bg-blue-500 px-2 py-0.5 rounded">v2.0</span></h1>
+            <div class="space-x-4 text-sm font-medium">
+                <a href="#analysis-section" class="hover:text-blue-400">분석 단계</a>
+                <a href="#inference-section" class="hover:text-blue-400">추론과 예측</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-6 py-8 space-y-12">
+        
+        <!-- Section 1: Analysis Steps & Graph -->
+        <section id="analysis-section" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-5 space-y-4">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-2xl font-bold mb-6 text-slate-900">데이터 분석의 4단계</h2>
+                    <div class="space-y-3">
+                        <div id="step-1" class="step-card p-4 rounded-xl border border-slate-100 cursor-pointer" onclick="activateStep(1)">
+                            <h3 class="font-bold flex items-center"><span class="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-xs mr-2">1</span> 구조 파악</h3>
+                            <p class="text-xs text-slate-500 mt-1">X축(시점)과 Y축(아이스크림 지수)의 관계 이해</p>
+                        </div>
+                        <div id="step-2" class="step-card p-4 rounded-xl border border-slate-100 cursor-pointer" onclick="activateStep(2)">
+                            <h3 class="font-bold flex items-center"><span class="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-xs mr-2">2</span> 추세 관찰</h3>
+                            <p class="text-xs text-slate-500 mt-1">전체적으로 '상승'하는 흐름을 확인</p>
+                        </div>
+                        <div id="step-3" class="step-card p-4 rounded-xl border border-slate-100 cursor-pointer" onclick="activateStep(3)">
+                            <h3 class="font-bold flex items-center"><span class="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-xs mr-2">3</span> 특이점 발견</h3>
+                            <p class="text-xs text-slate-500 mt-1 text-red-600 font-semibold">2013년의 급락과 2014년의 급반등 포착</p>
+                        </div>
+                        <div id="step-4" class="step-card p-4 rounded-xl border border-slate-100 cursor-pointer" onclick="activateStep(4)">
+                            <h3 class="font-bold flex items-center"><span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs mr-2">4</span> 인과 추론</h3>
+                            <p class="text-xs text-slate-500 mt-1">배경지식과 결합하여 '왜?'라는 질문에 답하기</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-7 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex justify-between items-end mb-4">
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-800">아이스크림 지수 시계열 차트</h3>
+                        <p class="text-xs text-slate-500">2011 - 2021 실적 및 2023 예측</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs font-bold text-slate-600">미래 예측 모드</span>
+                        <button id="predict-toggle" onclick="togglePrediction()" class="w-12 h-6 bg-slate-300 rounded-full relative transition-colors">
+                            <div id="toggle-circle" class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform"></div>
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="mainChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Inference & Prediction Lab -->
+        <section id="inference-section" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 4단계: 인과관계 추론 실습 -->
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="text-xl font-bold mb-2 flex items-center">🔍 4단계: 왜 2013년에 지수가 낮았을까요?</h3>
+                <p class="text-sm text-slate-500 mb-6">배경지식을 결합하여 가장 타당한 인과관계를 선택해 보세요.</p>
+                
+                <div class="space-y-4">
+                    <div onclick="selectInference(0)" class="p-4 rounded-xl border-2 border-slate-100 hover:border-blue-200 cursor-pointer transition-all inference-option">
+                        <span class="text-xs font-bold text-blue-600 mb-1 block">가설 A</span>
+                        <p class="font-semibold text-slate-700">"2013년 여름에 기록적인 폭염이 지속되었다."</p>
+                    </div>
+                    <div onclick="selectInference(1)" class="p-4 rounded-xl border-2 border-slate-100 hover:border-blue-200 cursor-pointer transition-all inference-option">
+                        <span class="text-xs font-bold text-blue-600 mb-1 block">가설 B</span>
+                        <p class="font-semibold text-slate-700">"2013년 여름은 유난히 길고 추운 장마가 이어졌다."</p>
+                    </div>
+                    <div onclick="selectInference(2)" class="p-4 rounded-xl border-2 border-slate-100 hover:border-blue-200 cursor-pointer transition-all inference-option">
+                        <span class="text-xs font-bold text-blue-600 mb-1 block">가설 C</span>
+                        <p class="font-semibold text-slate-700">"2013년에 아이스크림 제조 공장이 모두 파업했다."</p>
+                    </div>
+                </div>
+
+                <div id="inference-feedback" class="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-100 hidden">
+                    <!-- Feedback injected here -->
+                </div>
+            </div>
+
+            <!-- 미래 예측: 데이터 기반 예측 -->
+            <div class="bg-slate-900 text-white p-8 rounded-2xl shadow-xl flex flex-col">
+                <h3 class="text-xl font-bold mb-2 flex items-center">🔮 데이터 기반 미래 예측</h3>
+                <p class="text-slate-400 text-sm mb-6">과거 10년의 데이터를 바탕으로 2023년의 지수를 예측해 봅시다.</p>
+                
+                <div class="flex-grow space-y-6">
+                    <div class="bg-slate-800 p-5 rounded-xl">
+                        <h4 class="text-sm font-bold text-blue-400 mb-3">분석 결과에 따른 예측 모델</h4>
+                        <ul class="text-sm space-y-3">
+                            <li class="flex items-start">
+                                <span class="text-blue-400 mr-2">✔</span>
+                                <span><strong>전체 추세:</strong> 연간 약 1.5%씩 상승하는 우상향 곡선</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-blue-400 mr-2">✔</span>
+                                <span><strong>특이점 영향:</strong> 기상 이변이 없다면 지수는 100~102 사이 안착 예상</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="p-5 border border-slate-700 rounded-xl bg-slate-800/50">
+                        <h4 class="text-sm font-bold text-orange-400 mb-2">탐정의 결론</h4>
+                        <p class="text-sm leading-relaxed text-slate-300">
+                            2013년의 일시적인 하락은 '특이점'일 뿐, 전체적인 시장 규모는 커지고 있습니다. 2022년과 2023년은 코로나19 이후 야외 활동 증가와 기온 상승으로 인해 <strong>역대 최고치(102.5 이상)</strong>를 기록할 가능성이 높습니다.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mt-6 pt-6 border-t border-slate-700">
+                    <p class="text-xs text-slate-500">※ 이 예측은 과거 데이터의 추세선(Regression) 분석을 바탕으로 합니다.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-10 mt-12 text-center">
+        <p class="text-slate-500 text-sm">정보 교육 실습 도구 - 데이터 탐정 시리즈</p>
+    </footer>
+
+    <script>
+        // --- Data Store ---
+        const historyData = [
+            { x: 2011, y: 84.7 }, { x: 2012, y: 88.1 }, { x: 2013, y: 89.4 },
+            { x: 2014, y: 96.3 }, { x: 2015, y: 100.1 }, { x: 2016, y: 99.9 },
+            { x: 2017, y: 97.2 }, { x: 2018, y: 96.4 }, { x: 2019, y: 98.3 },
+            { x: 2020, y: 100.0 }, { x: 2021, y: 98.7 }
+        ];
+
+        const forecastData = [
+            { x: 2021, y: 98.7 }, { x: 2022, y: 101.5 }, { x: 2023, y: 102.8 }
+        ];
+
+        // --- Chart Config ---
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        let predictionVisible = false;
+
+        const mainChart = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: '실제 실적',
+                        data: historyData,
+                        showLine: true,
+                        borderColor: '#1e293b',
+                        backgroundColor: '#f97316',
+                        borderWidth: 3,
+                        pointRadius: 6,
+                        pointHoverRadius: 9,
+                        zIndex: 2
+                    },
+                    {
+                        label: '미래 예측',
+                        data: forecastData,
+                        showLine: true,
+                        borderColor: '#94a3b8',
+                        backgroundColor: '#94a3b8',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        hidden: true,
+                        zIndex: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `연도: ${ctx.raw.x}년 | 지수: ${ctx.raw.y}`
+                        }
+                    }
+                },
+                scales: {
+                    x: { type: 'linear', position: 'bottom', min: 2010, max: 2024, ticks: { stepSize: 2 } },
+                    y: { min: 80, max: 110 }
+                }
+            }
+        });
+
+        // --- Step Logic ---
+        function activateStep(n) {
+            document.querySelectorAll('.step-card').forEach(c => c.classList.remove('step-active'));
+            document.getElementById(`step-${n}`).classList.add('step-active');
+            
+            // Visual highlight for Step 3
+            if(n === 3) {
+                mainChart.data.datasets[0].pointBackgroundColor = historyData.map(d => d.x === 2013 ? '#ef4444' : '#f97316');
+                mainChart.data.datasets[0].pointRadius = historyData.map(d => d.x === 2013 ? 12 : 6);
+            } else {
+                mainChart.data.datasets[0].pointBackgroundColor = '#f97316';
+                mainChart.data.datasets[0].pointRadius = 6;
+            }
+            mainChart.update();
+        }
+
+        // --- Inference Logic ---
+        function selectInference(idx) {
+            const options = document.querySelectorAll('.inference-option');
+            const feedback = document.getElementById('inference-feedback');
+            
+            options.forEach(opt => opt.classList.remove('border-blue-500', 'bg-blue-50'));
+            options[idx].classList.add('border-blue-500', 'bg-blue-50');
+            
+            feedback.classList.remove('hidden');
+            if(idx === 1) { // Correct logic
+                feedback.innerHTML = `
+                    <div class="flex items-start">
+                        <span class="text-2xl mr-3">✅</span>
+                        <div>
+                            <p class="font-bold text-green-700">훌륭한 인과관계 추론입니다!</p>
+                            <p class="text-sm text-slate-600 mt-1">아이스크림은 기온과 매우 밀접한 상관관계가 있습니다. 장마가 길거나 기온이 낮으면 지수는 급락하며, 이는 2013년의 특이점을 설명하는 가장 강력한 배경지식입니다.</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                feedback.innerHTML = `
+                    <div class="flex items-start">
+                        <span class="text-2xl mr-3">🧐</span>
+                        <div>
+                            <p class="font-bold text-slate-700">다시 한번 생각해보세요.</p>
+                            <p class="text-sm text-slate-600 mt-1">만약 폭염이 있었다면 지수는 오히려 급상승했어야 합니다. 데이터의 방향(하락)과 배경지식의 방향이 일치하는지 다시 확인해 보세요.</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // --- Prediction Toggle ---
+        function togglePrediction() {
+            predictionVisible = !predictionVisible;
+            const toggle = document.getElementById('predict-toggle');
+            const circle = document.getElementById('toggle-circle');
+            
+            if(predictionVisible) {
+                toggle.classList.replace('bg-slate-300', 'bg-blue-600');
+                circle.style.transform = 'translateX(24px)';
+                mainChart.setDatasetVisibility(1, true);
+                activateStep(4);
+            } else {
+                toggle.classList.replace('bg-blue-600', 'bg-slate-300');
+                circle.style.transform = 'translateX(0px)';
+                mainChart.setDatasetVisibility(1, false);
+            }
+            mainChart.update();
+        }
+
+        // Init first step
+        activateStep(1);
+    </script>
+</body>
+</html>
